@@ -1,9 +1,12 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
-import {FontAwesome, MaterialIcons, MaterialCommunityIcons} from '@expo/vector-icons'
+import { View, StyleSheet, AsyncStorage } from 'react-native'
+import { FontAwesome, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { white, red, orange, blue, lightPurp, pink } from './colors'
+import { Notifications, Permissions } from 'expo'
 
-export function isBetween (num, x, y) {
+const NOTIFICATION_KEY = 'Udacifitness:notifications'
+
+export function isBetween(num, x, y) {
   if (num >= x && num <= y) {
     return true
   }
@@ -11,7 +14,7 @@ export function isBetween (num, x, y) {
   return false
 }
 
-export function calculateDirection (heading) {
+export function calculateDirection(heading) {
   let direction = ''
 
   if (isBetween(heading, 0, 22.5)) {
@@ -39,7 +42,7 @@ export function calculateDirection (heading) {
   return direction
 }
 
-export function timeToString (time = Date.now()) {
+export function timeToString(time = Date.now()) {
   const date = new Date(time)
   const todayUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
   return todayUTC.toISOString().split('T')[0]
@@ -65,9 +68,9 @@ export function getMetricMetaInfo(metric) {
       unit: 'miles',
       step: 1,
       type: 'steppers',
-      getIcon () {
+      getIcon() {
         return (
-          <View style={[styles.iconContainer, {backgroundColor: red}]}>
+          <View style={[styles.iconContainer, { backgroundColor: red }]}>
             <MaterialIcons
               name='directions-run'
               color={white}
@@ -83,9 +86,9 @@ export function getMetricMetaInfo(metric) {
       unit: 'miles',
       step: 1,
       type: 'steppers',
-      getIcon () {
+      getIcon() {
         return (
-          <View style={[styles.iconContainer, {backgroundColor: orange}]}>
+          <View style={[styles.iconContainer, { backgroundColor: orange }]}>
             <MaterialCommunityIcons
               name='bike'
               color={white}
@@ -101,9 +104,9 @@ export function getMetricMetaInfo(metric) {
       unit: 'meters',
       step: 100,
       type: 'steppers',
-      getIcon () {
+      getIcon() {
         return (
-          <View style={[styles.iconContainer, {backgroundColor: blue}]}>
+          <View style={[styles.iconContainer, { backgroundColor: blue }]}>
             <MaterialCommunityIcons
               name='swim'
               color={white}
@@ -119,9 +122,9 @@ export function getMetricMetaInfo(metric) {
       unit: 'hours',
       step: 1,
       type: 'slider',
-      getIcon () {
+      getIcon() {
         return (
-          <View style={[styles.iconContainer, {backgroundColor: lightPurp}]}>
+          <View style={[styles.iconContainer, { backgroundColor: lightPurp }]}>
             <FontAwesome
               name='bed'
               color={white}
@@ -137,9 +140,9 @@ export function getMetricMetaInfo(metric) {
       unit: 'rating',
       step: 1,
       type: 'slider',
-      getIcon () {
+      getIcon() {
         return (
-          <View style={[styles.iconContainer, {backgroundColor: pink}]}>
+          <View style={[styles.iconContainer, { backgroundColor: pink }]}>
             <MaterialCommunityIcons
               name='food'
               color={white}
@@ -160,4 +163,56 @@ export function getDailyReminderValue() {
   return {
     today: "Don't forget to log your data today!"
   }
+}
+
+export function clearLocalNotification() {
+  return AsyncStorage.removeItem(NOTIFICATION_KEY)
+    .then(Notifications.cancelAllScheduledNotificationsAsync)
+}
+
+function createNotification() {
+  return {
+    title: 'Log your stats',
+    body: `Don't forget to log your stats for today!`,
+    ios: {
+      sound: true,
+    },
+    android: {
+      sound: true,
+      priority: 'high',
+      sticky: false,
+      vibrate: true,
+    }
+  }
+}
+
+export function setLocalNotification() {
+  AsyncStorage.getItem(NOTIFICATION_KEY)
+    .then(JSON.parse)
+    .then((data) => {
+      if (data === null) {
+        Permissions.askAsync(Permissions.NOTIFICATIONS)
+          .then(({ status }) => {
+            console.log(status)
+            if (status === 'granted') {
+              Notifications.cancelAllScheduledNotificationsAsync()
+
+              let tomorrow = new Date()
+              tomorrow.setDate(tomorrow.getDate() + 1)
+              tomorrow.setHours(20)
+              tomorrow.setMinutes(0)
+
+              Notifications.scheduleLocalNotificationAsync(
+                createNotification(),
+                {
+                  time: tomorrow,
+                  repeat: 'day',
+                }
+              )
+
+              AsyncStorage.setItem(NOTIFICATION_KEY, JSON.stringify(true))
+            }
+          })
+      }
+    })
 }
