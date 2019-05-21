@@ -2,6 +2,7 @@
   "expo": {
     "name": "udacifitness",
     "slug": "udacifitness",
+    "description": "App desenvolvido durante nanodegree React Developer da Udacity",
     "privacy": "public",
     "sdkVersion": "32.0.0",
     "platforms": [
@@ -11,6 +12,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "notification": {
+      "icon": "./assets/icon.png"
+    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -23,7 +27,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.marcelomsoares.udacifitness"
+    },
+    "android": {
+     "package": "com.marcelomsoares.udacifitness"
     }
   }
 }
